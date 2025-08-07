@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rhythm Game - Twinkle Twinkle</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      background: #000;
+    }
+    #game {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+    }
+    .lane {
+      flex: 1;
+      border-left: 1px solid #333;
+      border-right: 1px solid #333;
+      position: relative;
+      transition: background 0.2s;
+    }
+    .lane.hit-glow {
+      background-color: rgba(0, 255, 0, 0.2);
+    }
+    .lane.miss-glow {
+      background-color: rgba(255, 0, 0, 0.2);
+    }
+    .note {
+      width: 80%;
+      height: 40px;
+      background: #0ff;
+      position: absolute;
+      left: 10%;
+      top: -40px;
+      border-radius: 10px;
+    }
+    .hit-line {
+      position: absolute;
+      bottom: 100px;
+      height: 10px;
+      width: 100%;
+      background: #f00;
+    }
+    .controls {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+    }
+    .touch-btn {
+      flex: 1;
+      height: 100px;
+      opacity: 0.1;
+    }
+    #start-button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px 40px;
+      font-size: 1.5rem;
+      background: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      z-index: 100;
+    }
+    #countdown {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 4rem;
+      color: white;
+      z-index: 99;
+      display: none;
+    }
+    #score {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: white;
+      font-size: 2rem;
+      z-index: 101;
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <div id="score">Score: 0</div>
+    <div class="lane" id="lane0"><div class="hit-line"></div></div>
+    <div class="lane" id="lane1"><div class="hit-line"></div></div>
+    <div class="lane" id="lane2"><div class="hit-line"></div></div>
+    <div class="lane" id="lane3"><div class="hit-line"></div></div>
+    <div id="countdown">3</div>
+    <div class="controls">
+      <div class="touch-btn" data-lane="0"></div>
+      <div class="touch-btn" data-lane="1"></div>
+      <div class="touch-btn" data-lane="2"></div>
+      <div class="touch-btn" data-lane="3"></div>
+    </div>
+    <button id="start-button">Start Game</button>
+  </div>
+
+  <audio id="music" src="twinkle.mp3"></audio>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const lanes = [
+        document.getElementById("lane0"),
+        document.getElementById("lane1"),
+        document.getElementById("lane2"),
+        document.getElementById("lane3"),
+      ];
+
+      const music = document.getElementById("music");
+      const startButton = document.getElementById("start-button");
+      const countdownEl = document.getElementById("countdown");
+      const scoreDisplay = document.getElementById("score");
+
+      let score = 0;
+
+      function updateScore(amount) {
+        score += amount;
+        scoreDisplay.innerText = `Score: ${score}`;
+      }
+
+      const notes = [
+        { "time": 0.0, "lane": 3 },
+        { "time": 0.632, "lane": 2 },
+        { "time": 1.263, "lane": 1 },
+        { "time": 1.895, "lane": 0 },
+        { "time": 2.526, "lane": 1 },
+        { "time": 3.158, "lane": 2 },
+        { "time": 3.789, "lane": 3 },
+        { "time": 5.053, "lane": 0 },
+        { "time": 5.684, "lane": 1 },
+        { "time": 6.316, "lane": 2 },
+        { "time": 6.947, "lane": 3 },
+        { "time": 7.579, "lane": 2 },
+        { "time": 8.211, "lane": 1 },
+        { "time": 8.842, "lane": 0 },
+        { "time": 10.105, "lane": 3 },
+        { "time": 10.737, "lane": 2 },
+        { "time": 11.368, "lane": 1 },
+        { "time": 12.0, "lane": 0 },
+        { "time": 12.632, "lane": 1 },
+        { "time": 13.263, "lane": 2 },
+        { "time": 13.895, "lane": 3 },
+        { "time": 15.158, "lane": 0 },
+        { "time": 15.789, "lane": 1 },
+        { "time": 16.421, "lane": 2 },
+        { "time": 17.053, "lane": 3 },
+        { "time": 17.684, "lane": 2 },
+        { "time": 18.316, "lane": 1 },
+        { "time": 18.947, "lane": 0 },
+        { "time": 20.21, "lane": 1 },
+        { "time": 20.842, "lane": 2 },
+        { "time": 21.474, "lane": 3 },
+        { "time": 22.105, "lane": 0 },
+        { "time": 22.737, "lane": 1 },
+        { "time": 23.368, "lane": 2 },
+        { "time": 24.0, "lane": 3 },
+        { "time": 25.263, "lane": 1 },
+        { "time": 25.895, "lane": 2 },
+        { "time": 26.526, "lane": 3 },
+        { "time": 27.158, "lane": 0 },
+        { "time": 27.789, "lane": 1 },
+        { "time": 28.421, "lane": 2 },
+        { "time": 29.053, "lane": 3 }
+      ];
+
+      const dropDuration = 2000;
+      let startTime = null;
+
+      function createNote(note) {
+        const el = document.createElement('div');
+        el.classList.add('note');
+        el.dataset.lane = note.lane;
+        el.dataset.time = note.time;
+        el.style.top = '-40px';
+        lanes[note.lane].appendChild(el);
+      }
+
+      function updateNotes() {
+        const now = performance.now() - startTime;
+        const hitLine = window.innerHeight - 100;
+
+        document.querySelectorAll('.note').forEach(note => {
+          const noteTime = parseFloat(note.dataset.time) * 1000;
+          const timeUntilHit = noteTime - now;
+          const top = (1 - timeUntilHit / dropDuration) * hitLine;
+
+          if (top >= -40) {
+            note.style.top = `${top}px`;
+          }
+
+          if (top > window.innerHeight) {
+            note.remove();
+            updateScore(-50);
+          }
+        });
+
+        requestAnimationFrame(updateNotes);
+      }
+
+      function flashLane(lane, className) {
+        const laneEl = lanes[lane];
+        laneEl.classList.add(className);
+        setTimeout(() => laneEl.classList.remove(className), 150);
+      }
+
+      function handleHit(lane) {
+        const now = performance.now() - startTime;
+        const hitWindow = 300;
+        const laneNotes = lanes[lane].querySelectorAll(".note");
+        let hit = false;
+
+        laneNotes.forEach(note => {
+          const noteTime = parseFloat(note.dataset.time) * 1000;
+          const notePos = parseFloat(note.style.top);
+          const distance = Math.abs(notePos - (window.innerHeight - 100));
+
+          if (distance < 50 && Math.abs(now - noteTime) < hitWindow) {
+            note.classList.add("hit");
+            note.style.background = "lime";
+            hit = true;
+            updateScore(100);
+            flashLane(lane, "hit-glow");
+            setTimeout(() => note.remove(), 100);
+          }
+        });
+
+        if (!hit) {
+          updateScore(-10);
+          flashLane(lane, "miss-glow");
+        }
+      }
+
+      document.addEventListener("keydown", e => {
+        const keys = ['a', 's', 'd', 'f'];
+        const lane = keys.indexOf(e.key.toLowerCase());
+        if (lane !== -1) handleHit(lane);
+      });
+
+      document.querySelectorAll(".touch-btn").forEach(btn => {
+        btn.addEventListener("touchstart", e => {
+          const lane = parseInt(btn.dataset.lane);
+          if (!isNaN(lane)) handleHit(lane);
+        });
+      });
+
+      startButton.addEventListener("click", () => {
+        score = 0;
+        updateScore(0);
+
+        let counter = 3;
+        countdownEl.innerText = counter;
+        countdownEl.style.display = "block";
+        startButton.style.display = "none";
+
+        const countdownInterval = setInterval(() => {
+          counter--;
+          if (counter > 0) {
+            countdownEl.innerText = counter;
+          } else {
+            clearInterval(countdownInterval);
+            countdownEl.style.display = "none";
+
+            const delay = dropDuration;
+            setTimeout(() => {
+              music.currentTime = 0;
+              music.play().then(() => {
+                startTime = performance.now();
+                notes.forEach(note => {
+                  setTimeout(() => createNote(note), (note.time * 1000) - dropDuration);
+                });
+                requestAnimationFrame(updateNotes);
+              });
+            }, delay);
+          }
+        }, 1000);
+      });
+    });
+  </script>
+</body>
+</html>
